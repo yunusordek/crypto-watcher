@@ -1,8 +1,6 @@
 package com.project.cryptowatcher.controller;
 
-import com.project.cryptowatcher.exception.CoinNotFoundException;
-import com.project.cryptowatcher.exception.CoinServiceException;
-import com.project.cryptowatcher.exception.RateLimitException;
+import com.project.cryptowatcher.exception.*;
 import com.project.cryptowatcher.model.ApiResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,5 +31,21 @@ public class CoinApiAdvice {
         response.setResult(false);
         response.setMessage(ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleUserNotFoundException(UserNotFoundException ex) {
+        ApiResponseDto<Object> response = new ApiResponseDto<>();
+        response.setResult(false);
+        response.setMessage(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(CoinAlreadyFavoritedException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleCoinAlreadyFavoritedException(CoinAlreadyFavoritedException ex) {
+        ApiResponseDto<Object> response = new ApiResponseDto<>();
+        response.setResult(false);
+        response.setMessage(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 }
