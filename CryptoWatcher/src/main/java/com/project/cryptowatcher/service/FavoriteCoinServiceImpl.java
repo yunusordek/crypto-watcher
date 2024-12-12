@@ -3,18 +3,21 @@ package com.project.cryptowatcher.service;
 import com.project.cryptowatcher.entity.FavoriteCoinEntity;
 import com.project.cryptowatcher.entity.UserEntity;
 import com.project.cryptowatcher.exception.CoinAlreadyFavoritedException;
+import com.project.cryptowatcher.exception.CoinNotFoundException;
 import com.project.cryptowatcher.exception.CoinServiceException;
 import com.project.cryptowatcher.exception.UserNotFoundException;
+import com.project.cryptowatcher.mapper.FavoriteCoinMapper;
 import com.project.cryptowatcher.model.FavoriteCoinRequestModel;
+import com.project.cryptowatcher.model.FavoriteCoinResponseModel;
 import com.project.cryptowatcher.repository.FavoriteCoinRepository;
 import com.project.cryptowatcher.repository.UserRepository;
 import com.project.cryptowatcher.utils.MapUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -26,6 +29,7 @@ public class FavoriteCoinServiceImpl implements FavoriteCoinService {
     private final CoinApiClient coinApiClient;
     private final FavoriteCoinRepository favoriteCoinRepository;
     private final UserRepository userRepository;
+    private final FavoriteCoinMapper favoriteCoinMapper;
 
     @Override
     @Transactional
@@ -34,10 +38,10 @@ public class FavoriteCoinServiceImpl implements FavoriteCoinService {
                 .orElseThrow(() -> new UserNotFoundException("User not found."));
 
         var coinDetail = fetchCoinDetails(requestDto.getCoinName());
-        String coinSymbol = (String) coinDetail.get("symbol");
+        String coinName = (String) coinDetail.get("name");
 
-        if (favoriteCoinRepository.findByCoinSymbolAndUserEntity(coinSymbol,user).isPresent()) {
-            throw new CoinAlreadyFavoritedException("The coin with symbol " + coinSymbol + " is already favorited.");
+        if (favoriteCoinRepository.findByCoinNameAndUserEntity(coinName, user).isPresent()) {
+            throw new CoinAlreadyFavoritedException("The coin with symbol " + coinName + " is already favorited.");
         }
 
         var marketData = MapUtils.getMarketData(coinDetail);
@@ -51,8 +55,8 @@ public class FavoriteCoinServiceImpl implements FavoriteCoinService {
         }
 
         var favoriteCoin = createFavoriteCoinEntity(
-                coinSymbol,
-                (String) coinDetail.get("name"),
+                (String) coinDetail.get("symbol"),
+                coinName,
                 ((Number) currentPrice.get("usd")).doubleValue(),
                 user
         );
@@ -78,4 +82,23 @@ public class FavoriteCoinServiceImpl implements FavoriteCoinService {
                 .build();
     }
 
+    @Override
+    public void removeFavoriteCoin(FavoriteCoinRequestModel requestModel) {
+        var user = userRepository.findById(requestModel.getUserId())
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
+        var coin =
+                favoriteCoinRepository.findByCoinNameAndUserEntity(
+                                requestModel.getCoinName(), user)
+                        .orElseThrow(() -> new CoinNotFoundException("Coin not found"));
+
+        favoriteCoinRepository.delete(coin);
+    }
+
+    @Override
+    public List<FavoriteCoinResponseModel> getFavoriteCoins(Long userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
+        var favoriteCoins = favoriteCoinRepository.findByUserEntity(user);
+        return favoriteCoinMapper.entityToDto(favoriteCoins);
+    }
 }
