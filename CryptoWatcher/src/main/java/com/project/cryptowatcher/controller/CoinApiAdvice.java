@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.HttpServerErrorException;
 
 @RestControllerAdvice
 public class CoinApiAdvice {
@@ -48,4 +49,54 @@ public class CoinApiAdvice {
         response.setMessage(ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleUnauthorizedException(UnauthorizedException ex) {
+        ApiResponseDto<Object> response = new ApiResponseDto<>();
+        response.setResult(false);
+        response.setMessage(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleTokenExpiredException(TokenExpiredException ex) {
+        ApiResponseDto<Object> response = new ApiResponseDto<>();
+        response.setResult(false);
+        response.setMessage(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(TokenSignatureException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleTokenSignatureException(TokenSignatureException ex) {
+        ApiResponseDto<Object> response = new ApiResponseDto<>();
+        response.setResult(false);
+        response.setMessage(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleInvalidTokenException(InvalidTokenException ex) {
+        ApiResponseDto<Object> response = new ApiResponseDto<>();
+        response.setResult(false);
+        response.setMessage(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleRuntimeException(RuntimeException ex) {
+        ApiResponseDto<Object> response = new ApiResponseDto<>();
+        response.setResult(false);
+        response.setMessage(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+
+    @ExceptionHandler(HttpServerErrorException.InternalServerError.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleInternalServerError(HttpServerErrorException.InternalServerError ex) {
+        ApiResponseDto<Object> response = new ApiResponseDto<>();
+        response.setResult(false);
+        response.setMessage(ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 }

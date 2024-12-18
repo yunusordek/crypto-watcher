@@ -3,16 +3,14 @@ package com.project.cryptowatcher.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
-
 @Entity
-@Table(name = "USER_INFORMATION")
+@Table(name = "LOGIN_USER")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserEntity {
+public class UserLoginEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,8 +18,11 @@ public class UserEntity {
 
     @Column(nullable = false, unique = true)
     private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
     private String email;
 
-    @OneToMany(mappedBy = "userEntity")
-    private List<FavoriteCoinEntity> favoriteCoins;
 }
