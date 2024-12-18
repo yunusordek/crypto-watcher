@@ -1,5 +1,6 @@
 package com.project.cryptowatcher.security;
 
+import com.project.cryptowatcher.constants.ExceptionMessages;
 import com.project.cryptowatcher.exception.UnauthorizedException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,14 +29,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String requestURI = request.getRequestURI();
         if (requestURI.equals("/auth/register") || requestURI.equals("/auth/login")) {
-            filterChain.doFilter(request, response);  // Bu iki endpoint'e izin ver
+            filterChain.doFilter(request, response);
             return;
         }
 
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            LOGGER.warning("Authorization header is missing or does not start with Bearer");
-            throw new UnauthorizedException("Authorization header is missing or does not start with Bearer");
+            LOGGER.warning(ExceptionMessages.MISSING_AUTH_BEARER);
+            throw new UnauthorizedException(ExceptionMessages.MISSING_AUTH_BEARER);
         }
 
         String token = authHeader.substring(7);
@@ -51,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } else {
                 LOGGER.warning("Invalid token for user: " + username);
-                throw new UnauthorizedException("Invalid token");
+                throw new UnauthorizedException(ExceptionMessages.INVALID_TOKEN);
             }
         }
 

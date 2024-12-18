@@ -1,5 +1,6 @@
 package com.project.cryptowatcher.security;
 
+import com.project.cryptowatcher.constants.ExceptionMessages;
 import com.project.cryptowatcher.repository.UserLoginRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
@@ -17,7 +18,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         var userEntity = userLoginRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Kullanıcı bulunamadı: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException(ExceptionMessages.USER_NOT_FOUND));
 
         return User.builder()
                 .username(userEntity.getUsername())

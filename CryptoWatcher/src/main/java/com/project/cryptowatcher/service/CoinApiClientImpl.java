@@ -1,5 +1,6 @@
 package com.project.cryptowatcher.service;
 
+import com.project.cryptowatcher.constants.ExceptionMessages;
 import com.project.cryptowatcher.exception.CoinNotFoundException;
 import com.project.cryptowatcher.exception.CoinServiceException;
 import com.project.cryptowatcher.exception.RateLimitException;
@@ -34,15 +35,15 @@ public class CoinApiClientImpl implements CoinApiClient {
             return response.getBody();
         } catch (HttpClientErrorException ex) {
             handleHttpClientErrorException(ex);
-            throw new CoinServiceException("Unhandled exception occurred", ex);
+            throw new CoinServiceException(ExceptionMessages.UNHANDLED_EXCEPTION, ex);
         }
     }
 
     private void handleHttpClientErrorException(HttpClientErrorException ex) {
         if (ex.getStatusCode() == HttpStatus.TOO_MANY_REQUESTS) {
-            throw new RateLimitException("Rate limit exceeded. Please try again later.");
+            throw new RateLimitException(ExceptionMessages.RATE_LIMIT_EXCEEDED);
         } else if (ex.getStatusCode() == HttpStatus.NOT_FOUND) {
-            throw new CoinNotFoundException("Coin not found");
+            throw new CoinNotFoundException(ExceptionMessages.COIN_NOT_FOUND);
         }
         log.error("CoinApiClientException occurred: {}", ex.getMessage());
     }

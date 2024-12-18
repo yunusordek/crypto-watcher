@@ -1,5 +1,6 @@
 package com.project.cryptowatcher.security;
 
+import com.project.cryptowatcher.constants.ExceptionMessages;
 import com.project.cryptowatcher.exception.InvalidTokenException;
 import com.project.cryptowatcher.exception.TokenExpiredException;
 import com.project.cryptowatcher.exception.TokenSignatureException;
@@ -84,11 +85,11 @@ public class JwtTokenUtil {
 
             return jws.getPayload();
         } catch (SignatureException e) {
-            throw new TokenSignatureException("Token signature is invalid", e);
+            throw new TokenSignatureException(ExceptionMessages.TOKEN_SIGNATURE_INVALID, e);
         } catch (ExpiredJwtException e) {
-            throw new TokenExpiredException("Token has expired", e);
+            throw new TokenExpiredException(ExceptionMessages.TOKEN_EXPIRED, e);
         } catch (Exception e) {
-            throw new InvalidTokenException("Invalid token", e);
+            throw new InvalidTokenException(ExceptionMessages.INVALID_TOKEN, e);
         }
     }
 }

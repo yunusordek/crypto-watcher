@@ -1,5 +1,6 @@
 package com.project.cryptowatcher.service;
 
+import com.project.cryptowatcher.constants.ExceptionMessages;
 import com.project.cryptowatcher.exception.CoinServiceException;
 import com.project.cryptowatcher.model.CoinModel;
 import com.project.cryptowatcher.utils.MapUtils;
@@ -23,12 +24,12 @@ public class CoinServiceImpl implements CoinService {
 
         var marketData = MapUtils.getMarketData(coinInfoData);
         if (Objects.isNull(marketData)) {
-            throw new CoinServiceException("Market data is missing for " + coinName);
+            throw new CoinServiceException(ExceptionMessages.MARKET_DATA_MISSING + coinName);
         }
 
         var currentPrice = MapUtils.getCurrentPrice(marketData);
         if (Objects.isNull(currentPrice) || !currentPrice.containsKey("usd")) {
-            throw new CoinServiceException("Current price in USD is missing for " + coinName);
+            throw new CoinServiceException(ExceptionMessages.PRICE_USD_MISSING + coinName);
         }
         return CoinModel.builder()
                 .id(coinName)

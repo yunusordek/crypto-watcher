@@ -1,5 +1,6 @@
 package com.project.cryptowatcher.service;
 
+import com.project.cryptowatcher.constants.ExceptionMessages;
 import com.project.cryptowatcher.entity.UserLoginEntity;
 import com.project.cryptowatcher.model.LoginRequestModel;
 import com.project.cryptowatcher.model.RegisterRequestModel;
@@ -20,27 +21,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public String login(LoginRequestModel loginRequest) {
         UserLoginEntity user = userLoginRepository.findByUsername(loginRequest.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException(ExceptionMessages.USER_NOT_FOUND));
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new RuntimeException(ExceptionMessages.INVALID_CREDENTIALS);
         }
-
-        // JWT token oluşturuluyor
         return jwtTokenUtil.generateToken(user.getUsername());
     }
 
     @Override
     public void register(RegisterRequestModel registerRequest) {
-        // Kullanıcı adı kontrolü
         if (userLoginRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
-            throw new RuntimeException("Username already taken");
+            throw new RuntimeException(ExceptionMessages.USERNAME_ALL_READY_TAKEN);
         }
 
-        // Şifreyi şifreliyoruz
         String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
-
-        // Yeni kullanıcıyı oluşturuyoruz
         UserLoginEntity newUser = UserLoginEntity.builder()
                 .username(registerRequest.getUsername())
                 .password(encodedPassword)
