@@ -2,32 +2,41 @@ package com.project.cryptowatcher.controller;
 
 import com.project.cryptowatcher.model.ApiResponseDto;
 import com.project.cryptowatcher.model.LoginRequestModel;
+import com.project.cryptowatcher.model.LoginResponseModel;
 import com.project.cryptowatcher.model.RegisterRequestModel;
-import com.project.cryptowatcher.service.UserService;
+import com.project.cryptowatcher.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserService userService;
+    private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponseDto> login(@RequestBody LoginRequestModel loginRequest) {
-        String token = userService.login(loginRequest);
-        return ResponseEntity.ok(createResponse("Bearer " + token));
+    public ResponseEntity<ApiResponseDto<LoginResponseModel>> login(@RequestBody LoginRequestModel loginRequest) {
+        return ResponseEntity.ok(createResponse(authService.login(loginRequest)));
     }
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponseDto> register(@RequestBody RegisterRequestModel registerRequest) {
-        userService.register(registerRequest);
+        authService.register(registerRequest);
         return ResponseEntity.ok(createResponse("User registered successfully"));
+    }
+
+    @PostMapping("/refreshToken")
+    public ResponseEntity<ApiResponseDto> refreshToken(@RequestHeader("Authorization") String oldToken) {
+        var token = authService.refreshToken(oldToken.substring(7));
+        return ResponseEntity.ok(createResponse("Bearer " + token));
+    }
+
+    @PostMapping("/refreshRefreshToken")
+    public ResponseEntity<ApiResponseDto> refreshRefreshToken(@RequestHeader("Authorization") String oldRefreshToken) {
+        var token = authService.refreshRefreshToken(oldRefreshToken.substring(7));
+        return ResponseEntity.ok(createResponse("Bearer " + token));
     }
 
     private <T> ApiResponseDto<T> createResponse(Object message) {

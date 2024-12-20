@@ -8,22 +8,25 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Service
+@RequiredArgsConstructor
 public class JwtTokenUtil {
 
-    private static final String SECRET_KEY = "256-bit-secret-key-256-bit-secret-key";
-    private static final long EXPIRATION_TIME = 86400000;
-    private final SecretKey secretKey = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    private static final long EXPIRATION_TIME = 86400000; // 1 gün
+    private static final long REFRESH_EXPIRATION_TIME = 2592000000L; // 30 gün
+    private final SecretKey secretKey;
 
     /**
      * Kullanıcı adı üzerinden JWT token oluşturur.
+     * Access Token: Kullanıcı isteği yaparken kimlik doğrulaması için kullanılır.
+     * Genellikle kısa süreli geçerliliğe sahiptir (örneğin, 1 gün).
      *
      * @param username Kullanıcı adı
      * @return Oluşturulan JWT token
@@ -33,6 +36,23 @@ public class JwtTokenUtil {
                 .subject(username)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    /**
+     * Kullanıcı adı üzerinden JWT refresh token oluşturur.
+     * Refresh Token: Access token süresi dolduğunda yeni bir access token almak için kullanılır.
+     * Daha uzun süreli geçerliliğe sahiptir (örneğin, 30 gün).
+     *
+     * @param username Kullanıcı adı
+     * @return Oluşturulan JWT refresh token
+     */
+    public String generateRefreshToken(String username) {
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + REFRESH_EXPIRATION_TIME))
                 .signWith(secretKey)
                 .compact();
     }
@@ -60,12 +80,22 @@ public class JwtTokenUtil {
     }
 
     /**
+     * Refresh Token geçerliliğini kontrol eder.
+     *
+     * @param token JWT refresh token
+     * @return Token geçerli mi?
+     */
+    public boolean isRefreshTokenValid(String token) {
+        return !isTokenExpired(token);
+    }
+
+    /**
      * Token'ın süresinin dolup dolmadığını kontrol eder.
      *
      * @param token JWT token
      * @return Süresi dolmuş mu?
      */
-    private boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) {
         Date expiration = parseClaims(token).getExpiration();
         return expiration.before(new Date());
     }
@@ -82,14 +112,29 @@ public class JwtTokenUtil {
                     .verifyWith(secretKey)
                     .build()
                     .parseSignedClaims(token);
-
             return jws.getPayload();
         } catch (SignatureException e) {
-            throw new TokenSignatureException(ExceptionMessages.TOKEN_SIGNATURE_INVALID, e);
+            throw new TokenSignatureException(ExceptionMessages.TOKEN_SIGNATURE_INVALID);
         } catch (ExpiredJwtException e) {
             throw new TokenExpiredException(ExceptionMessages.TOKEN_EXPIRED, e);
         } catch (Exception e) {
             throw new InvalidTokenException(ExceptionMessages.INVALID_TOKEN, e);
         }
+    }
+
+    /**
+     * Refresh Token oluşturur.
+     * Access Token Yenileme: refreshToken
+     *
+     * @param oldToken Eski JWT token
+     * @return Yeni JWT token
+     */
+    public String refreshToken(String oldToken) {
+        if (isTokenExpired(oldToken)) {
+            throw new TokenExpiredException(ExceptionMessages.TOKEN_EXPIRED);
+        }
+
+        String username = extractUsername(oldToken);
+        return generateToken(username);
     }
 }

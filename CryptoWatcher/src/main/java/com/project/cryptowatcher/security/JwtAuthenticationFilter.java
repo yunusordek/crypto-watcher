@@ -1,6 +1,8 @@
 package com.project.cryptowatcher.security;
 
 import com.project.cryptowatcher.constants.ExceptionMessages;
+import com.project.cryptowatcher.exception.InvalidTokenException;
+import com.project.cryptowatcher.exception.RateLimitException;
 import com.project.cryptowatcher.exception.UnauthorizedException;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
@@ -10,6 +12,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger LOGGER = Logger.getLogger(JwtAuthenticationFilter.class.getName());
     private final JwtTokenUtil jwtTokenUtil;
     private final UserDetailsService userDetailsService;
+    private final RedisTemplate<String, String> redisTemplate;
     private final ConcurrentMap<String, Bucket> bucketMap = new ConcurrentHashMap<>();
 
     private Bucket createNewBucket() {
@@ -41,10 +45,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
         try {
             String requestURI = request.getRequestURI();
-            if ("/auth/register".equals(requestURI) || "/auth/login".equals(requestURI)) {
+            if (isAuthEndpoint(requestURI)) {
                 handleRateLimiting(request, response, filterChain);
                 return;
             }
@@ -52,8 +56,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String authHeader = request.getHeader("Authorization");
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 LOGGER.log(Level.WARNING, ExceptionMessages.MISSING_AUTH_BEARER);
-                sendErrorResponse(response, HttpStatus.UNAUTHORIZED, ExceptionMessages.MISSING_AUTH_BEARER);
-                return;
+                throw new UnauthorizedException(ExceptionMessages.MISSING_AUTH_BEARER);
             }
 
             String token = authHeader.substring(7);
@@ -61,9 +64,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
 
-        } catch (UnauthorizedException exception) {
-            throw exception;
+        } catch (UnauthorizedException | RateLimitException | InvalidTokenException exception) {
+            sendErrorResponse(response, exception);
+        } catch (Exception exception) {
+            sendErrorResponse(response, new RuntimeException(exception.getMessage()));
         }
+    }
+
+    private boolean isAuthEndpoint(String requestURI) {
+        return "/auth/register".equals(requestURI) || "/auth/login".equals(requestURI);
     }
 
     private void handleRateLimiting(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
@@ -74,8 +83,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (!bucket.tryConsume(1)) {
             LOGGER.log(Level.WARNING, "Rate limit exceeded for IP: {0}", clientIp);
-            sendErrorResponse(response, HttpStatus.TOO_MANY_REQUESTS, ExceptionMessages.TOO_MANY_REQUEST);
-            return;
+            throw new RateLimitException(ExceptionMessages.TOO_MANY_REQUEST);
         }
 
         filterChain.doFilter(request, response);
@@ -87,21 +95,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            if (jwtTokenUtil.isTokenValid(token, userDetails.getUsername())) {
+            if (jwtTokenUtil.isTokenValid(token, userDetails.getUsername()) && redisTemplate.hasKey(token)) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities()
                 );
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } else {
-                LOGGER.log(Level.WARNING, "Invalid token for user: {0}", username);
-                sendErrorResponse(response, HttpStatus.UNAUTHORIZED, ExceptionMessages.INVALID_TOKEN);
+                handleTokenRefresh(token, response, username);
             }
         }
     }
 
-    private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String message) throws IOException {
+    private void handleTokenRefresh(String token, HttpServletResponse response, String username) throws IOException {
+        try {
+            if (jwtTokenUtil.isRefreshTokenValid(token)) {
+                String newToken = jwtTokenUtil.refreshToken(token);
+                response.setHeader("Authorization", "Bearer " + newToken);
+            } else {
+                LOGGER.log(Level.WARNING, "Invalid token for user: {0}", username);
+                throw new InvalidTokenException(ExceptionMessages.INVALID_TOKEN);
+            }
+        } catch (UnauthorizedException e) {
+            LOGGER.log(Level.WARNING, "Refresh token expired for user: " + username);
+            throw new UnauthorizedException(ExceptionMessages.TOKEN_EXPIRED);
+        }
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, Exception exception) throws IOException {
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        if (exception instanceof UnauthorizedException) {
+            status = HttpStatus.UNAUTHORIZED;
+        } else if (exception instanceof RateLimitException) {
+            status = HttpStatus.TOO_MANY_REQUESTS;
+        } else if (exception instanceof InvalidTokenException) {
+            status = HttpStatus.UNAUTHORIZED;
+        }
         response.setStatus(status.value());
-        response.getOutputStream().write(message.getBytes(StandardCharsets.UTF_8));
+        response.getOutputStream().write(exception.getMessage().getBytes(StandardCharsets.UTF_8));
     }
 
     private String getClientIP(HttpServletRequest request) {
@@ -115,5 +145,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String normalizeIpAddress(String ip) {
         return "0:0:0:0:0:0:0:1".equals(ip) ? "127.0.0.1" : ip;
     }
-
 }

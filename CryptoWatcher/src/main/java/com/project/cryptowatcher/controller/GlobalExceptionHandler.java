@@ -72,4 +72,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponseDto<Object>> handleInternalServerError(HttpServerErrorException.InternalServerError ex) {
         return buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleInvalidCredentialsException(InvalidCredentialsException ex) {
+        return buildResponse(ex, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(UsernameAlreadyTakenException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handleUsernameAlreadyTakenException(UsernameAlreadyTakenException ex) {
+        return buildResponse(ex, HttpStatus.CONFLICT);
+    }
 }
