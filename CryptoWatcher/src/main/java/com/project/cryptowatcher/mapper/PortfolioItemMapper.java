@@ -7,6 +7,7 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface PortfolioItemMapper {
+    @Mapping(target = "portfolioId", source = "portfolio.id")
     PortfolioItemModel entityToDto(PortfolioItemEntity entity);
 
     @Mapping(target = "portfolio.id", source = "portfolioId")
