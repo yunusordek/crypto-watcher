@@ -1,9 +1,6 @@
 package com.project.cryptowatcher.controller;
 
-import com.project.cryptowatcher.model.ApiResponseDto;
-import com.project.cryptowatcher.model.CoinModel;
-import com.project.cryptowatcher.model.FavoriteCoinRequestModel;
-import com.project.cryptowatcher.model.FavoriteCoinResponseModel;
+import com.project.cryptowatcher.model.*;
 import com.project.cryptowatcher.service.CryptoWatcherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -37,23 +34,43 @@ public class CryptoWatcherController {
         return ResponseEntity.ok(createResponse("Favorite coin removed successfully"));
     }
 
-    @GetMapping("/favoriteCoins/{userId}")
+    @GetMapping("/favoriteCoins/{userName}")
     public ResponseEntity
-            <ApiResponseDto<List<FavoriteCoinResponseModel>>> getFavoriteCoins(@PathVariable Long userId) {
-        return ResponseEntity.ok(createResponseList(cryptoWatcherService.getFavoriteCoins(userId)));
+            <ApiResponseDto<List<FavoriteCoinResponseModel>>> getFavoriteCoins(@PathVariable String userName) {
+        return ResponseEntity.ok(createResponseList(cryptoWatcherService.getFavoriteCoins(userName)));
     }
 
-    private <T> ApiResponseDto<T> createResponse(Object message) {
+    @PostMapping("/createPortfolio")
+    public ResponseEntity<ApiResponseDto> createPortfolio(@RequestBody PortfolioRequestModel requestDto) {
+        return ResponseEntity.ok(createResponse(cryptoWatcherService.createPortfolio(requestDto)));
+    }
+
+    @PostMapping("/addCryptoToPortfolio")
+    public ResponseEntity<ApiResponseDto> addCryptoToPortfolio(@RequestBody PortfolioItemRequestModel requestDto) {
+        return ResponseEntity.ok(createResponse(cryptoWatcherService.addCryptoToPortfolio(requestDto)));
+    }
+
+    @GetMapping("/getUserPortfolioNames/{username}")
+    public ResponseEntity<ApiResponseDto> getUserPortfolioNames(@PathVariable String username) {
+        return ResponseEntity.ok(createResponse(cryptoWatcherService.getUserPortfolioNames(username)));
+    }
+
+    @PostMapping("/getPortfolio")
+    public ResponseEntity<ApiResponseDto> getPortfolio(@RequestBody PortfolioRequestModel requestDto) {
+        return ResponseEntity.ok(createResponse(cryptoWatcherService.getPortfolio(requestDto)));
+    }
+
+    private <T> ApiResponseDto<T> createResponse(Object data) {
         ApiResponseDto<T> response = new ApiResponseDto<>();
         response.setResult(true);
-        response.setMessage(message);
+        response.setData(data);
         return response;
     }
 
-    private <T> ApiResponseDto<List<T>> createResponseList(List<T> message) {
+    private <T> ApiResponseDto<List<T>> createResponseList(List<T> data) {
         ApiResponseDto<List<T>> response = new ApiResponseDto<>();
         response.setResult(true);
-        response.setMessage(message);
+        response.setData(data);
         return response;
     }
 }

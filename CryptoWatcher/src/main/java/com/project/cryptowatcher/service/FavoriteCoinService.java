@@ -11,5 +11,5 @@ public interface FavoriteCoinService {
 
     void removeFavoriteCoin(FavoriteCoinRequestModel requestModel);
 
-    List<FavoriteCoinResponseModel> getFavoriteCoins(Long userId);
+    List<FavoriteCoinResponseModel> getFavoriteCoins(String userName);
 }

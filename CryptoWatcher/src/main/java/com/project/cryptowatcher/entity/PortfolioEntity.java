@@ -3,7 +3,7 @@ package com.project.cryptowatcher.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "PORTFOLIO")
@@ -18,15 +18,12 @@ public class PortfolioEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    private String name;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private UserEntity userEntity;
+    private UserEntity user;
 
-    private String portfolioName;
-
-    private Double totalValue;
-
-    private LocalDateTime createDate;
-
-    private LocalDateTime updateDate;
+    @OneToMany(mappedBy = "portfolio", fetch = FetchType.LAZY)
+    private List<PortfolioItemEntity> items;
 }

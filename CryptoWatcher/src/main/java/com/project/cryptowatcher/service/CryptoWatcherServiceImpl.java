@@ -1,8 +1,6 @@
 package com.project.cryptowatcher.service;
 
-import com.project.cryptowatcher.model.CoinModel;
-import com.project.cryptowatcher.model.FavoriteCoinRequestModel;
-import com.project.cryptowatcher.model.FavoriteCoinResponseModel;
+import com.project.cryptowatcher.model.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +12,7 @@ public class CryptoWatcherServiceImpl implements CryptoWatcherService {
 
     private final CoinService coinService;
     private final FavoriteCoinService favoriteCoinService;
+    private final PortfolioService portfolioService;
 
     @Override
     public CoinModel getCoinDetail(String coinName) {
@@ -31,9 +30,27 @@ public class CryptoWatcherServiceImpl implements CryptoWatcherService {
     }
 
     @Override
-    public List<FavoriteCoinResponseModel> getFavoriteCoins(Long userId) {
-        return favoriteCoinService.getFavoriteCoins(userId);
+    public List<FavoriteCoinResponseModel> getFavoriteCoins(String userName) {
+        return favoriteCoinService.getFavoriteCoins(userName);
     }
 
+    @Override
+    public String createPortfolio(PortfolioRequestModel requestModel) {
+        return portfolioService.createPortfolio(requestModel);
+    }
 
+    @Override
+    public String addCryptoToPortfolio(PortfolioItemRequestModel requestModel) {
+        return portfolioService.addCryptoToPortfolio(requestModel);
+    }
+
+    @Override
+    public List<String> getUserPortfolioNames(String username) {
+        return portfolioService.getUserPortfolioNames(username);
+    }
+
+    @Override
+    public PortfolioModel getPortfolio(PortfolioRequestModel requestModel) {
+        return portfolioService.getPortfolio(requestModel);
+    }
 }

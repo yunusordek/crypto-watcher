@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class FavoriteCoinRequestModel {
     private String coinName;
-    private Long userId;
+    private String username;
 }

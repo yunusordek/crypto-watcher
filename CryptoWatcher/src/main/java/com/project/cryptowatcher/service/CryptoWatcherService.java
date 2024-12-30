@@ -1,8 +1,6 @@
 package com.project.cryptowatcher.service;
 
-import com.project.cryptowatcher.model.CoinModel;
-import com.project.cryptowatcher.model.FavoriteCoinRequestModel;
-import com.project.cryptowatcher.model.FavoriteCoinResponseModel;
+import com.project.cryptowatcher.model.*;
 
 import java.util.List;
 
@@ -14,5 +12,13 @@ public interface CryptoWatcherService {
 
     void removeFavoriteCoin(FavoriteCoinRequestModel requestModel);
 
-    List<FavoriteCoinResponseModel> getFavoriteCoins(Long userId);
+    List<FavoriteCoinResponseModel> getFavoriteCoins(String userName);
+
+    String createPortfolio(PortfolioRequestModel requestModel);
+
+    String addCryptoToPortfolio(PortfolioItemRequestModel requestModel);
+
+    List<String> getUserPortfolioNames(String userName);
+
+    PortfolioModel getPortfolio(PortfolioRequestModel requestModel);
 }

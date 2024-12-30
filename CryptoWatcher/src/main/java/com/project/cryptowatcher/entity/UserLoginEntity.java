@@ -25,4 +25,7 @@ public class UserLoginEntity {
     @Column(nullable = false)
     private String email;
 
+    @OneToOne
+    @JoinColumn(name = "user_entity_id")
+    private UserEntity userEntity;
 }

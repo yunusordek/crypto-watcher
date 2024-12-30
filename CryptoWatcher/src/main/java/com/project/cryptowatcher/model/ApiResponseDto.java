@@ -14,5 +14,5 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class ApiResponseDto<T> implements Serializable {
     private boolean result;
-    private Object message;
+    private Object data;
 }

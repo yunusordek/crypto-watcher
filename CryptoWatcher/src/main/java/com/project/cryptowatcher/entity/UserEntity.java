@@ -20,8 +20,12 @@ public class UserEntity {
 
     @Column(nullable = false, unique = true)
     private String username;
+
     private String email;
 
     @OneToMany(mappedBy = "userEntity")
     private List<FavoriteCoinEntity> favoriteCoins;
+
+    @OneToOne(mappedBy = "userEntity")
+    private UserLoginEntity userLogin;
 }

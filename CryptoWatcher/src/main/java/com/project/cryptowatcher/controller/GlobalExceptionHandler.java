@@ -14,7 +14,7 @@ public class GlobalExceptionHandler {
     private ResponseEntity<ApiResponseDto<Object>> buildResponse(Exception ex, HttpStatus status) {
         ApiResponseDto<Object> response = new ApiResponseDto<>();
         response.setResult(false);
-        response.setMessage(ex.getMessage());
+        response.setData(ex.getMessage());
         return new ResponseEntity<>(response, status);
     }
 
@@ -63,11 +63,6 @@ public class GlobalExceptionHandler {
         return buildResponse(ex, HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiResponseDto<Object>> handleRuntimeException(RuntimeException ex) {
-        return buildResponse(ex, HttpStatus.BAD_REQUEST);
-    }
-
     @ExceptionHandler(HttpServerErrorException.InternalServerError.class)
     public ResponseEntity<ApiResponseDto<Object>> handleInternalServerError(HttpServerErrorException.InternalServerError ex) {
         return buildResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -81,5 +76,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UsernameAlreadyTakenException.class)
     public ResponseEntity<ApiResponseDto<Object>> handleUsernameAlreadyTakenException(UsernameAlreadyTakenException ex) {
         return buildResponse(ex, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(PortfolioAlreadyExistException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handlePortfolioAlreadyExistException(PortfolioAlreadyExistException ex) {
+        return buildResponse(ex, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(PortfolioNotFoundException.class)
+    public ResponseEntity<ApiResponseDto<Object>> handlePortfolioNotFoundException(PortfolioNotFoundException ex) {
+        return buildResponse(ex, HttpStatus.BAD_REQUEST);
     }
 }

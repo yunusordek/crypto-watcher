@@ -30,19 +30,19 @@ public class AuthController {
     @PostMapping("/refreshToken")
     public ResponseEntity<ApiResponseDto> refreshToken(@RequestHeader("Authorization") String oldToken) {
         var token = authService.refreshToken(oldToken.substring(7));
-        return ResponseEntity.ok(createResponse("Bearer " + token));
+        return ResponseEntity.ok(createResponse(token));
     }
 
     @PostMapping("/refreshRefreshToken")
     public ResponseEntity<ApiResponseDto> refreshRefreshToken(@RequestHeader("Authorization") String oldRefreshToken) {
         var token = authService.refreshRefreshToken(oldRefreshToken.substring(7));
-        return ResponseEntity.ok(createResponse("Bearer " + token));
+        return ResponseEntity.ok(createResponse(token));
     }
 
     private <T> ApiResponseDto<T> createResponse(Object message) {
         ApiResponseDto<T> response = new ApiResponseDto<>();
         response.setResult(true);
-        response.setMessage(message);
+        response.setData(message);
         return response;
     }
 }

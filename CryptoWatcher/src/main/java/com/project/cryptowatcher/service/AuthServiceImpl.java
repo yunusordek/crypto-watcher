@@ -1,11 +1,14 @@
 package com.project.cryptowatcher.service;
 
 import com.project.cryptowatcher.constants.ExceptionMessages;
+import com.project.cryptowatcher.entity.UserEntity;
 import com.project.cryptowatcher.entity.UserLoginEntity;
 import com.project.cryptowatcher.exception.InvalidCredentialsException;
 import com.project.cryptowatcher.exception.TokenExpiredException;
 import com.project.cryptowatcher.exception.UserNotFoundException;
 import com.project.cryptowatcher.exception.UsernameAlreadyTakenException;
+import com.project.cryptowatcher.mapper.UserLoginMapper;
+import com.project.cryptowatcher.mapper.UserMapper;
 import com.project.cryptowatcher.model.LoginRequestModel;
 import com.project.cryptowatcher.model.LoginResponseModel;
 import com.project.cryptowatcher.model.RegisterRequestModel;
@@ -15,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +30,8 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenUtil jwtTokenUtil;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, String> redisTemplate;
+    private final UserLoginMapper userLoginMapper;
+    private final UserMapper userMapper;
 
     @Override
     public LoginResponseModel login(LoginRequestModel loginRequest) {
@@ -39,19 +45,19 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void register(RegisterRequestModel registerRequest) {
         if (userLoginRepository.findByUsername(registerRequest.getUsername()).isPresent()) {
-            throw new UsernameAlreadyTakenException(ExceptionMessages.USERNAME_ALL_READY_TAKEN);
+            throw new UsernameAlreadyTakenException(ExceptionMessages.USERNAME_ALREADY_TAKEN);
         }
 
         String encodedPassword = passwordEncoder.encode(registerRequest.getPassword());
-        UserLoginEntity newUser = UserLoginEntity.builder()
-                .username(registerRequest.getUsername())
-                .password(encodedPassword)
-                .email(registerRequest.getEmail())
-                .build();
 
-        userLoginRepository.save(newUser);
+        UserLoginEntity userLogin = userLoginMapper.toUserLoginEntity(registerRequest, encodedPassword);
+        UserEntity userEntity = userMapper.toUserEntity(userLogin);
+        userLogin.setUserEntity(userEntity);
+        userEntity.setUserLogin(userLogin);
+        userLoginRepository.save(userLogin);
     }
 
     @Override
@@ -88,8 +94,8 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.opsForValue().set(refreshToken, username, 30, TimeUnit.DAYS);
 
         return LoginResponseModel.builder()
-                .accessToken("Bearer " + accessToken)
-                .refreshToken("Bearer " + refreshToken)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 

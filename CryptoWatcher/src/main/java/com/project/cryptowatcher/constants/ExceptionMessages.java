@@ -14,6 +14,8 @@ public class ExceptionMessages {
     public static final String ALL_READY_FAVORITED = "The coin is already in favorites. ";
     public static final String MISSING_AUTH_BEARER = "Authorization header is missing or does not start with Bearer";
     public static final String INVALID_CREDENTIALS = "Invalid credentials";
-    public static final String USERNAME_ALL_READY_TAKEN = "Username already taken";
+    public static final String USERNAME_ALREADY_TAKEN = "Username already taken";
     public static final String TOO_MANY_REQUEST = "Too many requests. Please try again later.";
+    public static final String PORTFOLIO_ALREADY_EXISTS = "Portfolio already exists";
+    public static final String PORTFOLIO_NOT_FOUND = "Portfolio not found";
 }

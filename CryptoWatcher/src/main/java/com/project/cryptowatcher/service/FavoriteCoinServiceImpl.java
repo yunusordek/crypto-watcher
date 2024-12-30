@@ -35,7 +35,7 @@ public class FavoriteCoinServiceImpl implements FavoriteCoinService {
     @Override
     @Transactional
     public void addFavoriteCoin(FavoriteCoinRequestModel requestDto) {
-        var user = userRepository.findById(requestDto.getUserId())
+        var user = userRepository.findByUsername(requestDto.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(ExceptionMessages.USER_NOT_FOUND));
 
         var coinDetail = fetchCoinDetails(requestDto.getCoinName());
@@ -85,7 +85,7 @@ public class FavoriteCoinServiceImpl implements FavoriteCoinService {
 
     @Override
     public void removeFavoriteCoin(FavoriteCoinRequestModel requestModel) {
-        var user = userRepository.findById(requestModel.getUserId())
+        var user = userRepository.findByUsername(requestModel.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(ExceptionMessages.USER_NOT_FOUND));
         var coin =
                 favoriteCoinRepository.findByCoinNameAndUserEntity(
@@ -96,8 +96,8 @@ public class FavoriteCoinServiceImpl implements FavoriteCoinService {
     }
 
     @Override
-    public List<FavoriteCoinResponseModel> getFavoriteCoins(Long userId) {
-        var user = userRepository.findById(userId)
+    public List<FavoriteCoinResponseModel> getFavoriteCoins(String userName) {
+        var user = userRepository.findByUsername(userName)
                 .orElseThrow(() -> new UserNotFoundException(ExceptionMessages.USER_NOT_FOUND));
         var favoriteCoins = favoriteCoinRepository.findByUserEntity(user);
         return favoriteCoinMapper.entityToDto(favoriteCoins);

@@ -109,8 +109,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void handleTokenRefresh(String token, HttpServletResponse response, String username) throws IOException {
         try {
             if (jwtTokenUtil.isRefreshTokenValid(token)) {
-                String newToken = jwtTokenUtil.refreshToken(token);
-                response.setHeader("Authorization", "Bearer " + newToken);
+                throw new UnauthorizedException(ExceptionMessages.TOKEN_EXPIRED);
             } else {
                 LOGGER.log(Level.WARNING, "Invalid token for user: {0}", username);
                 throw new InvalidTokenException(ExceptionMessages.INVALID_TOKEN);
