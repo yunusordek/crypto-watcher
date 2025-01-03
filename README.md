@@ -14,7 +14,7 @@ CryptoWatcher is an application that allows users to manage their portfolios, tr
 
 ### Requirements
 
-- Java 11 or higher
+- Java 17 or higher
 - MySQL Database
 - Redis
 - Maven
